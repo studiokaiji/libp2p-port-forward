@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -10,13 +10,16 @@ import (
 type Options struct {
 	forwardPort uint16
 	acceptPort  uint16
-	connectTo string
+	connectTo   string
 }
 
-var o = &Options{}
+var FlagOptions = &Options{}
 
 var rootCmd = &cobra.Command{
 	Use: "libp2p-port-forward",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("libp2p-port-forward v0.1.0")
+	},
 }
 
 func Execute() {
@@ -29,21 +32,21 @@ func Execute() {
 func init() {
 	cobra.OnInitialize()
 	rootCmd.Flags().Uint16VarP(
-		&o.forwardPort,
+		&FlagOptions.forwardPort,
 		"forward-port",
 		"f",
 		22,
 		"port to forward (in listen mode)",
 	)
 	rootCmd.Flags().Uint16VarP(
-		&o.acceptPort,
+		&FlagOptions.acceptPort,
 		"accept-port",
 		"a",
 		2222,
 		"port to accept (in connect mode)",
 	)
 	rootCmd.Flags().StringVarP(
-		&o.connectTo,
+		&FlagOptions.connectTo,
 		"connect-to",
 		"c",
 		"127.0.0.1",
