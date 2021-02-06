@@ -13,11 +13,11 @@ import (
 type Server struct {
 	node host.Host
 	addr string
-	port int16
+	port uint16
 }
 
 // New create server
-func New(addr string, port int16) Server {
+func New(addr string, port uint16) Server {
 	ctx := context.Background()
 	listenAddr := fmt.Sprintf("/ip4/%s/tcp/%d", addr, port)
 	node, err := libp2p.New(ctx, libp2p.ListenAddrStrings(listenAddr))
