@@ -8,9 +8,9 @@ import (
 )
 
 type Options struct {
-	forwardPort uint16
-	acceptPort  uint16
-	connectTo   string
+	ForwardPort uint16
+	AcceptPort  uint16
+	ConnectTo   string
 }
 
 var FlagOptions = &Options{}
@@ -19,7 +19,7 @@ var rootCmd = &cobra.Command{
 	Use: "libp2p-port-forward",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("libp2p-port-forward v0.1.0")
-	},
+	}
 }
 
 func Execute() {
