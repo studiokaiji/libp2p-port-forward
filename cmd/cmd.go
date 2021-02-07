@@ -49,7 +49,7 @@ func init() {
 		&FlagOptions.ConnectTo,
 		"connect-to",
 		"c",
-		"127.0.0.1",
+		"",
 		"target server ip to connect",
 	)
 }
