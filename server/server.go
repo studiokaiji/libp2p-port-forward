@@ -33,4 +33,5 @@ func New(ctx context.Context, addr string, port uint16) *Server {
 func (s *Server) Listen(handler network.StreamHandler) {
 	log.Println("Waiting for client to connect.")
 	s.node.SetStreamHandler("/libp2p-port-forward/v0", handler)
+	return
 }
