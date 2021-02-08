@@ -16,9 +16,7 @@ func main() {
 	cmd.Execute()
 
 	o := cmd.FlagOptions
-	ctx, cancel := context.WithCancel(context.Background())
-
-	defer cancel()
+	ctx := context.Background()
 	
 	if len(o.ConnectTo) == 0 {
 		s := server.New(ctx, "127.0.0.1", o.AcceptPort)
