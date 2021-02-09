@@ -1,6 +1,6 @@
 FROM golang:1.15.8
 
-RUN apk update && apk add git
+RUN apt-get update && apt-get install git
 
 RUN mkdir /go/src/app
 WORKDIR /go/src/app
