@@ -35,7 +35,7 @@ func init() {
 		&FlagOptions.ForwardPort,
 		"forward-port",
 		"f",
-		22,
+		2223,
 		"port to forward (in listen mode)",
 	)
 	rootCmd.Flags().Uint16VarP(

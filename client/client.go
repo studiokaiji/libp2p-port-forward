@@ -4,31 +4,102 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
 
 	libp2p "github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
+	discovery "github.com/libp2p/go-libp2p-discovery"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
+	"github.com/studiokaiji/libp2p-port-forward/constants"
 )
 
 type Client struct {
-	stream network.Stream
+	node host.Host
 	addr string
 	port uint16
 }
 
-func New(addr string, port uint16, targetPeerId peer.ID) Client {
-	ctx := context.Background()
+var idht *dht.IpfsDHT
+
+func New(ctx context.Context, addr string, port uint16) Client {
 	listenAddr := fmt.Sprintf("/ip4/%s/tcp/%d", addr, port)
 	node, err := libp2p.New(ctx, libp2p.ListenAddrStrings(listenAddr))
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	s, err := node.NewStream(ctx, targetPeerId, "/libp2p-port-forward/v0")
-	if err != nil {
-		panic(err)
-	}
-
-	return Client{s, addr, port}
+	return Client{node, addr, port}
 }
 
+func (c *Client) Connect(ctx context.Context, targetPeerId peer.ID) {
+	peer := c.discoveryPeer(ctx, targetPeerId)
+
+	log.Println("Connecting to", peer.ID)
+
+	if err := c.node.Connect(ctx, peer); err != nil {
+		fmt.Println(err)
+	}
+
+	stream, err := c.node.NewStream(ctx, peer.ID, constants.Protocol)
+	if err != nil {
+		log.Fatalln("Connection failed:", err)
+	} else {
+		log.Println(stream.ID())
+	}
+
+	log.Println("Connected to", peer.ID)
+	log.Println(fmt.Sprintf("You can connect with localhost:%d", c.port))
+}
+
+func (c *Client) discoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
+	kademliaDHT, err := dht.New(ctx, c.node)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	if err = kademliaDHT.Bootstrap(ctx); err != nil {
+		log.Fatalln(err)
+	}
+
+	var wg sync.WaitGroup
+	for _, peerAddr := range constants.BootstrapPeers {
+		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := c.node.Connect(ctx, *peerinfo); err != nil {
+				log.Fatalln(err)
+			} else {
+				log.Println("Connection established with bootstrap node:", *peerinfo)
+			}
+		}()
+	}
+	wg.Wait()
+
+	routingDiscovery := discovery.NewRoutingDiscovery(kademliaDHT)
+	peerChan, err := routingDiscovery.FindPeers(ctx, targetPeerId.Pretty())
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	var targetPeer peer.AddrInfo
+
+	for peer := range peerChan {
+		if peer.ID == c.node.ID() {
+			continue
+		}
+
+		if peer.ID == targetPeerId {
+			log.Println("Found peer:", peer.ID)
+			targetPeer = peer
+			break
+		}
+	}
+
+	if len(targetPeer.ID) == 0 {
+		log.Fatalln("Peer not found.")
+	}
+
+	return targetPeer
+}
