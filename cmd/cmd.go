@@ -1,24 +1,59 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/cobra"
+	"github.com/studiokaiji/libp2p-port-forward/client"
+	"github.com/studiokaiji/libp2p-port-forward/server"
 )
 
-type Options struct {
-	ForwardPort uint16
-	AcceptPort  uint16
-	ConnectTo   string
-}
-
-var FlagOptions = &Options{}
+var address string
+var port uint16
+var connectTo string
 
 var rootCmd = &cobra.Command{
 	Use: "libp2p-port-forward",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("libp2p-port-forward v0.1.0")
+	},
+}
+
+var clientCmd = &cobra.Command{
+	Use:   "client",
+	Short: "Startup client node.",
+	Run: func(cmd *cobra.Command, args []string) {
+		pid, err := peer.IDB58Decode(connectTo)
+		if err != nil {
+			fmt.Println(pid.String())
+			panic(err)
+		}
+
+		ctx := context.Background()
+
+		c := client.New(ctx, address, port)
+		fmt.Println("Started client node.")
+
+		c.Connect(ctx, pid)
+	},
+}
+
+var serverCmd = &cobra.Command{
+	Use:   "server",
+	Short: "Startup server node.",
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+
+		s := server.New(ctx, address, port)
+		fmt.Println("Started server node.")
+
+		s.Listen(func(stream network.Stream) {
+			fmt.Println(stream.ID())
+		})
 	},
 }
 
@@ -31,25 +66,42 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize()
-	rootCmd.Flags().Uint16VarP(
-		&FlagOptions.ForwardPort,
-		"forward-port",
-		"f",
-		2223,
-		"port to forward (in listen mode)",
-	)
-	rootCmd.Flags().Uint16VarP(
-		&FlagOptions.AcceptPort,
-		"accept-port",
+
+	clientCmd.Flags().StringVarP(
+		&address,
+		"address",
 		"a",
-		2222,
-		"port to accept (in connect mode)",
+		"127.0.0.1",
+		"Libp2p client node ip address",
 	)
-	rootCmd.Flags().StringVarP(
-		&FlagOptions.ConnectTo,
+	clientCmd.Flags().Uint16VarP(
+		&port,
+		"port",
+		"p",
+		2222,
+		"Libp2p client node port",
+	)
+	clientCmd.Flags().StringVarP(
+		&connectTo,
 		"connect-to",
 		"c",
 		"",
-		"target server ip to connect",
+		"PeerId of the target(Server) libp2p node",
+	)
+	clientCmd.MarkFlagRequired("connect-to")
+
+	serverCmd.Flags().StringVarP(
+		&address,
+		"address",
+		"a",
+		"0.0.0.0",
+		"Libp2p server node ip address",
+	)
+	serverCmd.Flags().Uint16VarP(
+		&port,
+		"port",
+		"p",
+		22,
+		"Libp2p server node port",
 	)
 }
