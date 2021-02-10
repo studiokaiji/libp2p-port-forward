@@ -35,7 +35,7 @@ func New(ctx context.Context, addr string, port uint16) Client {
 func (c *Client) Connect(ctx context.Context, targetPeerId peer.ID) {
 	peer := c.discoveryPeer(ctx, targetPeerId)
 
-	log.Println("Connecting to", peer.ID)
+	log.Println("Connecting...")
 
 	if err := c.node.Connect(ctx, peer); err != nil {
 		fmt.Println(err)
@@ -49,7 +49,6 @@ func (c *Client) Connect(ctx context.Context, targetPeerId peer.ID) {
 	}
 
 	log.Println("Connected to", peer.ID)
-	log.Println(fmt.Sprintf("You can connect with localhost:%d", c.port))
 }
 
 func (c *Client) discoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
