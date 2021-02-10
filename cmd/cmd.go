@@ -77,7 +77,7 @@ func init() {
 		"address",
 		"a",
 		"127.0.0.1",
-		"Libp2p client node ip address",
+		"Libp2p client node listen address",
 	)
 	clientCmd.Flags().Uint16VarP(
 		&port,
@@ -99,8 +99,8 @@ func init() {
 		&address,
 		"address",
 		"a",
-		"0.0.0.0",
-		"Libp2p server node ip address",
+		"127.0.0.1",
+		"Libp2p server node listen address",
 	)
 	serverCmd.Flags().Uint16VarP(
 		&port,
