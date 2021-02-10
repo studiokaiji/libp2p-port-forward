@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/studiokaiji/libp2p-port-forward/client"
 	"github.com/studiokaiji/libp2p-port-forward/server"
+	"github.com/studiokaiji/libp2p-port-forward/util"
 )
 
 var address string
@@ -39,6 +40,8 @@ var clientCmd = &cobra.Command{
 		fmt.Println("Started client node.")
 
 		c.Connect(ctx, pid)
+
+		util.OSInterrupt()
 	},
 }
 
@@ -54,6 +57,8 @@ var serverCmd = &cobra.Command{
 		s.Listen(func(stream network.Stream) {
 			fmt.Println(stream.ID())
 		})
+
+		util.OSInterrupt()
 	},
 }
 
@@ -104,4 +109,7 @@ func init() {
 		22,
 		"Libp2p server node port",
 	)
+
+	rootCmd.AddCommand(clientCmd)
+	rootCmd.AddCommand(serverCmd)
 }

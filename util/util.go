@@ -5,11 +5,9 @@ import (
 	"os/signal"
 )
 
-func OSInterrupt(callback func()) chan bool {
+func OSInterrupt() {	
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
 
-	done := make(chan bool)
-
-	return done
+	<-quit
 }
