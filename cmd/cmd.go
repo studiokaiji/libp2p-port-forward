@@ -52,7 +52,11 @@ var serverCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 
-		s := server.New(ctx, "127.0.0.1", port)
+		forward := server.ServerForward{ 
+			Addr: forwardAddress,
+			Port: forwardPort,
+		}
+		s := server.New(ctx, "127.0.0.1", port, forward)
 		fmt.Println("Started server node.")
 
 		s.Listen(func(stream network.Stream) {
