@@ -9,7 +9,7 @@ WORK IN PROGRESS....
 ### Usage
 
 ```
-usage: p2p-port-forward [<flags>]
+usage: libp2p-port-forward [<flags>]
 Flags:
       --help                   Show help
   -f, --forward-port=22        port to forward (in listen mode)
