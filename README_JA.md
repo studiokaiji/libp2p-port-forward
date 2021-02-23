@@ -9,7 +9,7 @@ libp2p-port-forwardはlibp2pを使用したピアツーピアで異なるネッ�
 ### 使用法
 
 ```
-usage: p2p-port-forward [<flags>]
+usage: libp2p-port-forward [<flags>]
 Flags:
       --help                   ヘルプの表示
   -f, --forward-port=22        転送先のサーバーのポート
