@@ -36,14 +36,9 @@ func (c *Client) Connect(ctx context.Context, targetPeerId peer.ID) {
 	peer := c.discoveryPeer(ctx, targetPeerId)
 
 	log.Println("Connecting to", peer.ID)
-
-	if err := c.node.Connect(ctx, peer); err != nil {
-		fmt.Println(err)
-	}
-
 	stream, err := c.node.NewStream(ctx, peer.ID, constants.Protocol)
 	if err != nil {
-		log.Fatalln("Connection failed:", err)
+		log.Fatalln(err)
 	} else {
 		log.Println(stream.ID())
 	}
