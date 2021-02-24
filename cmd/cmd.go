@@ -38,9 +38,9 @@ var clientCmd = &cobra.Command{
 		ctx := context.Background()
 
 		c := client.New(ctx, "127.0.0.1", port)
-		fmt.Println("Started client node.")
-
-		c.Connect(ctx, pid)
+		
+		stream := c.Connect(ctx, pid)
+		c.ListenAndSync(stream)
 
 		util.OSInterrupt()
 	},
@@ -52,11 +52,11 @@ var serverCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 
-		forward := server.ServerForward{ 
+		forward := server.ServerForward{
 			Addr: forwardAddress,
 			Port: forwardPort,
 		}
-		s := server.New(ctx, "127.0.0.1", port, forward)
+		s := server.New(ctx, "0.0.0.0", port, forward)
 		fmt.Println("Started server node.")
 
 		s.Listen(func(stream network.Stream) {
