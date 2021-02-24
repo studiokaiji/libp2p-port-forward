@@ -47,6 +47,13 @@ func New(ctx context.Context, addr string, port uint16, forward ServerForward) *
 func (s *Server) Listen(handler network.StreamHandler) {
 	ctx := context.Background()
 
+	tcpConn, err := s.dialForwardServer()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Println("Connected forward server.")
+
 	log.Println("Announcing ourselves...")
 
 	kademliaDHT, err := dht.New(ctx, s.node)
@@ -69,14 +76,9 @@ func (s *Server) Listen(handler network.StreamHandler) {
 
 	log.Println("Connecting forward server...")
 
-	tcpConn, err := s.dialForwardServer()
-	if err != nil {
-		panic(err)
-	}
-
-	log.Println("Connected forward server.")
-
 	s.node.SetStreamHandler(constants.Protocol, func(stream network.Stream) {
+		defer stream.Close()
+		
 		handler(stream)
 
 		log.Println("NEW STREAM")
