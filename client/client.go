@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
@@ -23,7 +24,7 @@ type Client struct {
 var idht *dht.IpfsDHT
 
 func New(ctx context.Context, addr string, port uint16) Client {
-	listenAddr := fmt.Sprintf("/ip4/%s/tcp/%d", addr, port)
+	listenAddr := fmt.Sprintf("/ip4/%s/tcp/0", addr)
 	node, err := libp2p.New(ctx, libp2p.ListenAddrStrings(listenAddr))
 	if err != nil {
 		log.Fatalln(err)
@@ -33,18 +34,26 @@ func New(ctx context.Context, addr string, port uint16) Client {
 }
 
 func (c *Client) Connect(ctx context.Context, targetPeerId peer.ID) {
+
+
 	peer := c.discoveryPeer(ctx, targetPeerId)
 
 	log.Println("Connecting to", peer.ID)
 	stream, err := c.node.NewStream(ctx, peer.ID, constants.Protocol)
 	if err != nil {
-		log.Fatalln(err)
-	} else {
-		log.Println(stream.ID())
-	}
+		log.Println(err)
+		return
+	} 
+
+	log.Println(stream.ID())
+	rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
 
 	log.Println("Connected to", peer.ID)
 	log.Println(fmt.Sprintf("You can connect with localhost:%d", c.port))
+}
+
+func readData() {
+
 }
 
 func (c *Client) discoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
