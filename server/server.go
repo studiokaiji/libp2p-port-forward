@@ -21,8 +21,6 @@ type ServerForward struct {
 
 type Server struct {
 	node    libp2p.Node
-	addr    string
-	port    uint16
 	forward ServerForward
 	ID      peer.ID
 }
@@ -31,12 +29,12 @@ var idht *dht.IpfsDHT
 
 // New create server
 func New(ctx context.Context, addr string, port uint16, forward ServerForward) *Server {
-	node, err := libp2p.New(ctx)
+	node, err := libp2p.New(ctx, addr, port)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return &Server{node, addr, port, forward, node.ID()}
+	return &Server{node, forward, node.ID()}
 }
 
 // Listen when it receives a value from the other node, and calls the handler.
