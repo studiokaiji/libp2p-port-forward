@@ -25,13 +25,13 @@ type Client struct {
 
 var idht *dht.IpfsDHT
 
-func New(ctx context.Context, addr string, port uint16, listen ClientListen) Client {
+func New(ctx context.Context, addr string, port uint16, listen ClientListen) *Client {
 	node, err := libp2p.New(ctx, addr, port)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return Client{node, listen}
+	return &Client{node, listen}
 }
 
 func (c *Client) ListenAndSync(stream network.Stream) {
