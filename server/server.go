@@ -6,15 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"sync"
 
-	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
-	discovery "github.com/libp2p/go-libp2p-discovery"
-	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/studiokaiji/libp2p-port-forward/constants"
+	"github.com/studiokaiji/libp2p-port-forward/libp2p"
 )
 
 type ServerForward struct {
@@ -23,7 +20,7 @@ type ServerForward struct {
 }
 
 type Server struct {
-	node    host.Host
+	node    libp2p.Node
 	addr    string
 	port    uint16
 	forward ServerForward
@@ -34,8 +31,7 @@ var idht *dht.IpfsDHT
 
 // New create server
 func New(ctx context.Context, addr string, port uint16, forward ServerForward) *Server {
-	listenAddr := fmt.Sprintf("/ip4/%s/tcp/%d", addr, port)
-	node, err := libp2p.New(ctx, libp2p.ListenAddrStrings(listenAddr))
+	node, err := libp2p.New(ctx)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -53,32 +49,16 @@ func (s *Server) Listen(handler network.StreamHandler) {
 	}
 
 	log.Println("Connected forward server.")
-
 	log.Println("Announcing ourselves...")
 
-	kademliaDHT, err := dht.New(ctx, s.node)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	log.Println("Bootstrapping the DHT...")
-
-	if err = kademliaDHT.Bootstrap(ctx); err != nil {
-		log.Fatalln(err)
-	}
-
-	s.connectToBootstapPeers(ctx)
-
-	routingDiscovery := discovery.NewRoutingDiscovery(kademliaDHT)
-	discovery.Advertise(ctx, routingDiscovery, s.ID.Pretty())
+	s.node.Advertise(ctx)
 
 	log.Println("Successfully announced.")
-
 	log.Println("Connecting forward server...")
 
 	s.node.SetStreamHandler(constants.Protocol, func(stream network.Stream) {
 		defer stream.Close()
-		
+
 		handler(stream)
 
 		log.Println("NEW STREAM")
@@ -101,25 +81,6 @@ func (s *Server) dialForwardServer() (*net.TCPConn, error) {
 	}
 
 	return net.DialTCP("tcp", nil, raddr)
-}
-
-func (s *Server) connectToBootstapPeers(ctx context.Context) {
-	var wg sync.WaitGroup
-	for _, peerAddr := range constants.BootstrapPeers {
-		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := s.node.Connect(ctx, *peerinfo); err != nil {
-				log.Println(err)
-			} else {
-				log.Println("Connection established with bootstrap node:", *peerinfo)
-			}
-		}()
-	}
-	wg.Wait()
-
-	return
 }
 
 func send(s network.Stream, tcpConn *net.TCPConn) error {
