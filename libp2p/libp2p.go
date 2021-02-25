@@ -36,8 +36,7 @@ func (n *Node) ConnectToTargetPeer(ctx context.Context, targetPeerId peer.ID) ne
 
 	stream, err := n.NewStream(ctx, peer.ID, constants.Protocol)
 	if err != nil {
-		log.Println(err)
-		return nil
+		log.Fatalln(err)
 	}
 	log.Println("Connected to", peer.ID)
 
