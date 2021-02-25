@@ -28,7 +28,7 @@ func New(ctx context.Context) (Node, error) {
 }
 
 func (n *Node) ConnectToTargetPeer(ctx context.Context, targetPeerId peer.ID) network.Stream {
-	peer := n.discoveryPeer(ctx, targetPeerId)
+	peer := n.DiscoveryPeer(ctx, targetPeerId)
 
 	log.Println("Connecting to", peer.ID)
 
@@ -42,7 +42,7 @@ func (n *Node) ConnectToTargetPeer(ctx context.Context, targetPeerId peer.ID) ne
 	return stream
 }
 
-func (n *Node) discoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
+func (n *Node) DiscoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
 	kademliaDHT, err := dht.New(ctx, n)
 	if err != nil {
 		log.Fatalln(err)
