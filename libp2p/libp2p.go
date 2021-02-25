@@ -20,9 +20,11 @@ type Node struct {
 
 var idht *dht.IpfsDHT
 
-func New(ctx context.Context) (host.Host, error) {
+func New(ctx context.Context) (Node, error) {
 	listenAddr := libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0")
-	return libp2p.New(ctx, listenAddr)
+	node, err := libp2p.New(ctx, listenAddr)
+
+	return Node{node}, err
 }
 
 func (n *Node) ConnectToTargetPeer(ctx context.Context, targetPeerId peer.ID) network.Stream {
