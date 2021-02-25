@@ -40,7 +40,7 @@ func New(ctx context.Context, addr string, port uint16) Client {
 func (c *Client) ListenAndSync(stream network.Stream) {
 	log.Println("Creating listen server")
 
-	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.addr, c.port))
+  tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.addr, c.port))
 	if err != nil {
 		log.Fatalln(err)
 	}
