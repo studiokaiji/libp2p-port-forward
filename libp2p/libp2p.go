@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 
@@ -20,8 +21,9 @@ type Node struct {
 
 var idht *dht.IpfsDHT
 
-func New(ctx context.Context) (Node, error) {
-	listenAddr := libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0")
+func New(ctx context.Context, addr string, port uint16) (Node, error) {
+	strAddr := fmt.Sprintf("/ip4/%s/tcp/%d", addr, port)
+	listenAddr := libp2p.ListenAddrStrings(strAddr)
 	node, err := libp2p.New(ctx, listenAddr)
 
 	return Node{node}, err
