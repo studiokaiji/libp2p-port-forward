@@ -28,7 +28,7 @@ func New(ctx context.Context) (Node, error) {
 }
 
 func (n *Node) ConnectToTargetPeer(ctx context.Context, targetPeerId peer.ID) network.Stream {
-	peer := n.DiscoveryPeer(ctx, targetPeerId)
+	peer := n.discoveryPeer(ctx, targetPeerId)
 
 	log.Println("Connecting to", peer.ID)
 
@@ -42,16 +42,29 @@ func (n *Node) ConnectToTargetPeer(ctx context.Context, targetPeerId peer.ID) ne
 	return stream
 }
 
-func (n *Node) DiscoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
+func (n *Node) Advertise(ctx context.Context) {
+	routing := n.NewRouting(ctx)
+	discovery.Advertise(ctx, routing, n.ID().Pretty())
+}
+
+func (n *Node) NewRouting(ctx context.Context) *discovery.RoutingDiscovery {
 	kademliaDHT, err := dht.New(ctx, n)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
+	log.Println("Bootstrapping the DHT...")
+
 	if err = kademliaDHT.Bootstrap(ctx); err != nil {
 		log.Fatalln(err)
 	}
 
+	n.connectToBootstapPeers(ctx)
+
+	return discovery.NewRoutingDiscovery(kademliaDHT)
+}
+
+func (n *Node) connectToBootstapPeers(ctx context.Context) {
 	var wg sync.WaitGroup
 	for _, peerAddr := range constants.BootstrapPeers {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
@@ -59,7 +72,7 @@ func (n *Node) DiscoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.Add
 		go func() {
 			defer wg.Done()
 			if err := n.Connect(ctx, *peerinfo); err != nil {
-				log.Fatalln(err)
+				log.Println(err)
 			} else {
 				log.Println("Connection established with bootstrap node:", *peerinfo)
 			}
@@ -67,8 +80,12 @@ func (n *Node) DiscoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.Add
 	}
 	wg.Wait()
 
-	routingDiscovery := discovery.NewRoutingDiscovery(kademliaDHT)
-	peerChan, err := routingDiscovery.FindPeers(ctx, targetPeerId.Pretty())
+	return
+}
+
+func (n *Node) discoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
+	routing := n.NewRouting(ctx)
+	peerChan, err := routing.FindPeers(ctx, targetPeerId.Pretty())
 	if err != nil {
 		log.Fatalln(err)
 	}
