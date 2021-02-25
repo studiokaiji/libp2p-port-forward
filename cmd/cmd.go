@@ -38,11 +38,11 @@ var clientCmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		listen := client.ClientListen {
+		listen := client.ClientListen{
 			Addr: "127.0.0.1",
-			Port: libp2pPort,
+			Port: listenPort,
 		}
-		c := client.New(ctx, "127.0.0.1", listenPort, listen)
+		c := client.New(ctx, "127.0.0.1", libp2pPort, listen)
 
 		stream := c.Connect(ctx, pid)
 		c.ListenAndSync(stream)
