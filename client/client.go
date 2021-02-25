@@ -13,27 +13,31 @@ import (
 	"github.com/studiokaiji/libp2p-port-forward/util"
 )
 
+type ClientListen struct {
+	Addr string
+	Port uint16
+}
+
 type Client struct {
-	node libp2p.Node
-	addr string
-	port uint16
+	node   libp2p.Node
+	listen ClientListen
 }
 
 var idht *dht.IpfsDHT
 
-func New(ctx context.Context, addr string, port uint16) Client {
-	node, err := libp2p.New(ctx)
+func New(ctx context.Context, addr string, port uint16, listen ClientListen) Client {
+	node, err := libp2p.New(ctx, addr, port)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return Client{node, addr, port}
+	return Client{node, listen}
 }
 
 func (c *Client) ListenAndSync(stream network.Stream) {
 	log.Println("Creating listen server")
 
-	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.addr, c.port))
+	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.listen.Addr, c.listen.Port))
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -44,7 +48,7 @@ func (c *Client) ListenAndSync(stream network.Stream) {
 	}
 
 	log.Println("Created listen server")
-	log.Println(fmt.Sprintf("You can connect with localhost:%d", c.port))
+	log.Println(fmt.Sprintf("You can connect with localhost:%d", c.listen.Port))
 
 	tcpConn, err := ln.AcceptTCP()
 	if err != nil {

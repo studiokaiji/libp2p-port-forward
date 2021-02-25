@@ -13,7 +13,8 @@ import (
 	"github.com/studiokaiji/libp2p-port-forward/util"
 )
 
-var port uint16
+var libp2pPort uint16
+var listenPort uint16
 var forwardPort uint16
 var forwardAddress string
 var connectTo string
@@ -37,8 +38,12 @@ var clientCmd = &cobra.Command{
 
 		ctx := context.Background()
 
-		c := client.New(ctx, "127.0.0.1", port)
-		
+		listen := client.ClientListen {
+			Addr: "127.0.0.1",
+			Port: libp2pPort,
+		}
+		c := client.New(ctx, "127.0.0.1", listenPort, listen)
+
 		stream := c.Connect(ctx, pid)
 		c.ListenAndSync(stream)
 
@@ -56,7 +61,7 @@ var serverCmd = &cobra.Command{
 			Addr: forwardAddress,
 			Port: forwardPort,
 		}
-		s := server.New(ctx, "0.0.0.0", port, forward)
+		s := server.New(ctx, "0.0.0.0", libp2pPort, forward)
 		fmt.Println("Started server node.")
 
 		s.Listen(func(stream network.Stream) {
@@ -78,10 +83,17 @@ func init() {
 	cobra.OnInitialize()
 
 	clientCmd.Flags().Uint16VarP(
-		&port,
-		"port",
-		"p",
+		&listenPort,
+		"listen-port",
+		"l",
 		2222,
+		"Libp2p client node port",
+	)
+	clientCmd.Flags().Uint16VarP(
+		&libp2pPort,
+		"libp2p-port",
+		"p",
+		60001,
 		"Libp2p client node port",
 	)
 	clientCmd.Flags().StringVarP(
@@ -94,10 +106,17 @@ func init() {
 	clientCmd.MarkFlagRequired("connect-to")
 
 	serverCmd.Flags().Uint16VarP(
-		&port,
-		"port",
+		&forwardPort,
+		"forward-port",
+		"f",
+		22,
+		"Port to forward",
+	)
+	serverCmd.Flags().Uint16VarP(
+		&libp2pPort,
+		"libp2p-port",
 		"p",
-		2222,
+		60001,
 		"Libp2p server node port",
 	)
 	serverCmd.Flags().StringVarP(
@@ -106,13 +125,6 @@ func init() {
 		"a",
 		"localhost",
 		"Address to forward",
-	)
-	serverCmd.Flags().Uint16VarP(
-		&forwardPort,
-		"forward-port",
-		"f",
-		22,
-		"Port to forward",
 	)
 
 	rootCmd.AddCommand(clientCmd)
