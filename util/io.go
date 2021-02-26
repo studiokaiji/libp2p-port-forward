@@ -11,18 +11,18 @@ func Sync(source1 io.ReadWriteCloser, source2 io.ReadWriteCloser) {
 
 		_, err := io.Copy(source2, source1)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 	}()
 	_, err := io.Copy(source1, source2)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 }
 
 func closeAll(sources ...io.Closer) {
-	log.Println("Closing all connections")
 	for _, source := range sources {
 		source.Close()
 	}
+	log.Println("Closed all connections")
 }
