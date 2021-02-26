@@ -11,12 +11,12 @@ func Sync(source1 io.ReadWriteCloser, source2 io.ReadWriteCloser) {
 
 		_, err := io.Copy(source2, source1)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 		}
 	}()
 	_, err := io.Copy(source1, source2)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 }
 

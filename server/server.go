@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"log"
@@ -12,6 +11,7 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/studiokaiji/libp2p-port-forward/constants"
 	"github.com/studiokaiji/libp2p-port-forward/libp2p"
+	"github.com/studiokaiji/libp2p-port-forward/util"
 )
 
 type ServerForward struct {
@@ -21,8 +21,6 @@ type ServerForward struct {
 
 type Server struct {
 	node    libp2p.Node
-	addr    string
-	port    uint16
 	forward ServerForward
 	ID      peer.ID
 }
@@ -31,12 +29,12 @@ var idht *dht.IpfsDHT
 
 // New create server
 func New(ctx context.Context, addr string, port uint16, forward ServerForward) *Server {
-	node, err := libp2p.New(ctx)
+	node, err := libp2p.New(ctx, addr, port)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return &Server{node, addr, port, forward, node.ID()}
+	return &Server{node, forward, node.ID()}
 }
 
 // Listen when it receives a value from the other node, and calls the handler.
@@ -59,14 +57,11 @@ func (s *Server) Listen(handler network.StreamHandler) {
 	s.node.SetStreamHandler(constants.Protocol, func(stream network.Stream) {
 		defer stream.Close()
 
-		handler(stream)
-
 		log.Println("NEW STREAM")
 
-		err := send(stream, tcpConn)
-		if err != nil {
-			log.Println(err)
-		}
+		util.Sync(stream, tcpConn)
+
+		handler(stream)
 	})
 
 	log.Println("Waiting for client to connect.\nYour PeerId is", s.ID.Pretty())
@@ -83,6 +78,7 @@ func (s *Server) dialForwardServer() (*net.TCPConn, error) {
 	return net.DialTCP("tcp", nil, raddr)
 }
 
+/*
 func send(s network.Stream, tcpConn *net.TCPConn) error {
 	buf := bufio.NewReader(s)
 	bytes, err := buf.ReadBytes('\n')
@@ -91,9 +87,15 @@ func send(s network.Stream, tcpConn *net.TCPConn) error {
 		return err
 	}
 
-	tcpConn.Write(bytes)
+	n, err := tcpConn.Write(bytes)
+	if err != nil {
+		return err
+	}
+
+	log.Println(n)
 
 	res := make([]byte, 4*1024)
+
 	_, err = tcpConn.Read(res)
 	if err != nil {
 		s.Reset()
@@ -102,3 +104,4 @@ func send(s network.Stream, tcpConn *net.TCPConn) error {
 
 	return nil
 }
+*/
