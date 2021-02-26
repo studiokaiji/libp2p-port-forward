@@ -38,30 +38,27 @@ func New(ctx context.Context, addr string, port uint16, forward ServerForward) *
 }
 
 // Listen when it receives a value from the other node, and calls the handler.
-func (s *Server) Listen(handler network.StreamHandler) {
+func (s *Server) Listen() {
 	ctx := context.Background()
-
+		
+	log.Println("Connecting forward server...")
 	tcpConn, err := s.dialForwardServer()
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	log.Println("Connected forward server.")
+
 	log.Println("Announcing ourselves...")
-
 	s.node.Advertise(ctx)
-
 	log.Println("Successfully announced.")
-	log.Println("Connecting forward server...")
 
 	s.node.SetStreamHandler(constants.Protocol, func(stream network.Stream) {
 		defer stream.Close()
 
 		log.Println("NEW STREAM")
 
-		util.Sync(stream, tcpConn)
-
-		handler(stream)
+		go util.Sync(stream, tcpConn)
 	})
 
 	log.Println("Waiting for client to connect.\nYour PeerId is", s.ID.Pretty())

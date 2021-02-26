@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/cobra"
 	"github.com/studiokaiji/libp2p-port-forward/client"
@@ -64,9 +63,7 @@ var serverCmd = &cobra.Command{
 		s := server.New(ctx, "0.0.0.0", libp2pPort, forward)
 		fmt.Println("Started server node.")
 
-		s.Listen(func(stream network.Stream) {
-			fmt.Println(stream.ID())
-		})
+		s.Listen()
 
 		util.OSInterrupt()
 	},
