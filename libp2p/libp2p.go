@@ -86,6 +86,8 @@ func (n *Node) connectToBootstapPeers(ctx context.Context) {
 
 func (n *Node) discoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
 	routing := n.NewRouting(ctx)
+
+	log.Println("Finding peer...")
 	peerChan, err := routing.FindPeers(ctx, targetPeerId.Pretty())
 	if err != nil {
 		log.Fatalln(err)
