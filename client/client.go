@@ -34,7 +34,7 @@ func New(ctx context.Context, addr string, port uint16, listen ClientListen) *Cl
 	return &Client{node, listen}
 }
 
-func (c *Client) ListenAndSync(stream network.Stream) {
+func (c *Client) ListenAndSync(stream network.Stream) *net.TCPConn {
 	log.Println("Creating listen server")
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.listen.Addr, c.listen.Port))
@@ -57,7 +57,7 @@ func (c *Client) ListenAndSync(stream network.Stream) {
 
 	go util.Sync(tcpConn, stream)
 
-	return
+	return tcpConn
 }
 
 func (c *Client) Connect(ctx context.Context, targetPeerId peer.ID) network.Stream {
