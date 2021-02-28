@@ -61,9 +61,7 @@ var serverCmd = &cobra.Command{
 			Port: forwardPort,
 		}
 		s := server.New(ctx, "0.0.0.0", libp2pPort, forward)
-		fmt.Println("Started server node.")
-
-		s.Listen()
+		s.ListenAndSync()
 
 		util.OSInterrupt()
 	},
