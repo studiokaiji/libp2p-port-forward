@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -29,22 +30,21 @@ var clientCmd = &cobra.Command{
 	Use:   "client",
 	Short: "Startup client node.",
 	Run: func(cmd *cobra.Command, args []string) {
-		pid, err := peer.IDB58Decode(connectTo)
-		if err != nil {
-			fmt.Println(pid.String())
-			panic(err)
-		}
-
 		ctx := context.Background()
 
 		listen := client.ClientListen{
 			Addr: "127.0.0.1",
 			Port: listenPort,
 		}
+
 		c := client.New(ctx, "127.0.0.1", libp2pPort, listen)
 
-		stream := c.Connect(ctx, pid)
-		c.ListenAndSync(stream)
+		pid, err := peer.IDB58Decode(connectTo)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		c.ConnectAndSync(ctx, pid)
 
 		util.OSInterrupt()
 	},

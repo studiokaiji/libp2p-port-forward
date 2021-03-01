@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 
-	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/studiokaiji/libp2p-port-forward/libp2p"
@@ -34,34 +33,36 @@ func New(ctx context.Context, addr string, port uint16, listen ClientListen) *Cl
 	return &Client{node, listen}
 }
 
-func (c *Client) ListenAndSync(stream network.Stream) *net.TCPConn {
-	log.Println("Creating listen server")
-
+func (c *Client) ConnectAndSync(ctx context.Context, targetPeerId peer.ID) {
+	log.Println("Creating listen server...")
 	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", c.listen.Addr, c.listen.Port))
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	ln, err := net.ListenTCP("tcp", tcpAddr)
+	tcpLn, err := net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	log.Println("Created listen server")
-	log.Println(fmt.Sprintf("You can connect with localhost:%d", c.listen.Port))
 
-	tcpConn, err := ln.AcceptTCP()
-	if err != nil {
-		log.Fatalln(err)
-	}
+	peer := c.node.DiscoveryPeer(ctx, targetPeerId)
 
-	go util.Sync(tcpConn, stream)
+	log.Println("You can connect with", tcpLn.Addr().String())
 
-	return tcpConn
-}
+	go func() {
+		for {
+			tcpConn, err := tcpLn.AcceptTCP()
+			if err != nil {
+				log.Fatalln(err)
+			}
 
-func (c *Client) Connect(ctx context.Context, targetPeerId peer.ID) network.Stream {
-	return c.node.ConnectToTargetPeer(ctx, targetPeerId)
+			stream := c.node.OpenStreamToTargetPeer(ctx, peer)
+
+			go util.Sync(tcpConn, stream)
+		}
+	}()
 }
 
 /*
