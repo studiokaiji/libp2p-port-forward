@@ -44,7 +44,8 @@ func (s *Server) ListenAndSync() {
 	log.Println("Successfully announced.")
 
 	s.node.SetStreamHandler(constants.Protocol, func(stream network.Stream) {
-		log.Println("NEW STREAM")
+		log.Println("Got a new stream!")
+
 		log.Println("Connecting forward server...")
 
 		tcpConn, err := s.dialForwardServer()
@@ -52,7 +53,7 @@ func (s *Server) ListenAndSync() {
 			log.Fatalln(err)
 		}
 
-		log.Println("Connected forward server")
+		log.Println("Connected forward server.")
 		go util.Sync(tcpConn, stream)
 	})
 
