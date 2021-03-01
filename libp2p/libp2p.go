@@ -29,26 +29,24 @@ func New(ctx context.Context, addr string, port uint16) (Node, error) {
 	return Node{node}, err
 }
 
-func (n *Node) ConnectToTargetPeer(ctx context.Context, targetPeerId peer.ID) network.Stream {
-	peer := n.discoveryPeer(ctx, targetPeerId)
-
-	log.Println("Connecting to", peer.ID)
+func (n *Node) OpenStreamToTargetPeer(ctx context.Context, peer peer.AddrInfo) network.Stream {
+	log.Println("Opening a stream to", peer.ID)
 
 	stream, err := n.NewStream(ctx, peer.ID, constants.Protocol)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("Connected to", peer.ID)
+	log.Println("Opened a stream to", peer.ID)
 
 	return stream
 }
 
 func (n *Node) Advertise(ctx context.Context) {
-	routing := n.NewRouting(ctx)
+	routing := n.newRouting(ctx)
 	discovery.Advertise(ctx, routing, n.ID().Pretty())
 }
 
-func (n *Node) NewRouting(ctx context.Context) *discovery.RoutingDiscovery {
+func (n *Node) newRouting(ctx context.Context) *discovery.RoutingDiscovery {
 	kademliaDHT, err := dht.New(ctx, n)
 	if err != nil {
 		log.Fatalln(err)
@@ -84,8 +82,8 @@ func (n *Node) connectToBootstapPeers(ctx context.Context) {
 	return
 }
 
-func (n *Node) discoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
-	routing := n.NewRouting(ctx)
+func (n *Node) DiscoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
+	routing := n.newRouting(ctx)
 
 	log.Println("Finding peer...")
 	peerChan, err := routing.FindPeers(ctx, targetPeerId.Pretty())
