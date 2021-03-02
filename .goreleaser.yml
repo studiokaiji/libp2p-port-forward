@@ -1,0 +1,23 @@
+builds:
+  - binary: md4pt
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - 386
+      - arm
+      - arm64
+archives:
+  format: tar.gz
+  replacements:
+    amd64: x86_64
+    386: i386
+    darwin: darwin
+    linux: linux
+  name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+  files:
+    - README.md
+    - README_JA.md
+    - LICENCE.txt

@@ -1,24 +1,69 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"os"
 
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/cobra"
+	"github.com/studiokaiji/libp2p-port-forward/client"
+	"github.com/studiokaiji/libp2p-port-forward/server"
+	"github.com/studiokaiji/libp2p-port-forward/util"
 )
 
-type Options struct {
-	ForwardPort uint16
-	AcceptPort  uint16
-	ConnectTo   string
-}
-
-var FlagOptions = &Options{}
+var libp2pPort uint16
+var listenPort uint16
+var forwardPort uint16
+var forwardAddress string
+var connectTo string
 
 var rootCmd = &cobra.Command{
 	Use: "libp2p-port-forward",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("libp2p-port-forward v0.1.0")
+	},
+}
+
+var clientCmd = &cobra.Command{
+	Use:   "client",
+	Short: "Startup client node.",
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+
+		listen := client.ClientListen{
+			Addr: "127.0.0.1",
+			Port: listenPort,
+		}
+
+		c := client.New(ctx, "127.0.0.1", libp2pPort, listen)
+
+		pid, err := peer.IDB58Decode(connectTo)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		c.ConnectAndSync(ctx, pid)
+
+		util.OSInterrupt()
+	},
+}
+
+var serverCmd = &cobra.Command{
+	Use:   "server",
+	Short: "Startup server node.",
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+
+		forward := server.ServerForward{
+			Addr: forwardAddress,
+			Port: forwardPort,
+		}
+		s := server.New(ctx, "0.0.0.0", libp2pPort, forward)
+		s.ListenAndSync()
+
+		util.OSInterrupt()
 	},
 }
 
@@ -31,25 +76,52 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize()
-	rootCmd.Flags().Uint16VarP(
-		&FlagOptions.ForwardPort,
-		"forward-port",
-		"f",
-		22,
-		"port to forward (in listen mode)",
-	)
-	rootCmd.Flags().Uint16VarP(
-		&FlagOptions.AcceptPort,
-		"accept-port",
-		"a",
+
+	clientCmd.Flags().Uint16VarP(
+		&listenPort,
+		"listen-port",
+		"l",
 		2222,
-		"port to accept (in connect mode)",
+		"Listen server port",
 	)
-	rootCmd.Flags().StringVarP(
-		&FlagOptions.ConnectTo,
+	clientCmd.Flags().Uint16VarP(
+		&libp2pPort,
+		"libp2p-port",
+		"p",
+		60001,
+		"Libp2p client node port",
+	)
+	clientCmd.Flags().StringVarP(
+		&connectTo,
 		"connect-to",
 		"c",
 		"",
-		"target server ip to connect",
+		"PeerId of the server libp2p node",
 	)
+	clientCmd.MarkFlagRequired("connect-to")
+
+	serverCmd.Flags().Uint16VarP(
+		&forwardPort,
+		"forward-port",
+		"f",
+		22,
+		"Port to forward",
+	)
+	serverCmd.Flags().Uint16VarP(
+		&libp2pPort,
+		"libp2p-port",
+		"p",
+		60001,
+		"Libp2p server node port",
+	)
+	serverCmd.Flags().StringVarP(
+		&forwardAddress,
+		"forward-address",
+		"a",
+		"localhost",
+		"Address to forward",
+	)
+
+	rootCmd.AddCommand(clientCmd)
+	rootCmd.AddCommand(serverCmd)
 }
