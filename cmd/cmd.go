@@ -82,7 +82,7 @@ func init() {
 		"listen-port",
 		"l",
 		2222,
-		"Libp2p client node port",
+		"Listen server port",
 	)
 	clientCmd.Flags().Uint16VarP(
 		&libp2pPort,
@@ -96,7 +96,7 @@ func init() {
 		"connect-to",
 		"c",
 		"",
-		"PeerId of the target(Server) libp2p node",
+		"PeerId of the server libp2p node",
 	)
 	clientCmd.MarkFlagRequired("connect-to")
 
