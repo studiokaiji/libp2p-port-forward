@@ -3,6 +3,7 @@ module github.com/studiokaiji/libp2p-port-forward
 go 1.15
 
 require (
+	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/libp2p/go-libp2p v0.30.0
 	github.com/libp2p/go-libp2p-circuit v0.6.0 // indirect

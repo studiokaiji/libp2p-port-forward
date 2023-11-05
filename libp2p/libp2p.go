@@ -3,12 +3,13 @@ package libp2p
 import (
 	"context"
 	"fmt"
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoremem"
+	"io"
 	"log"
 	"sync"
 
-	libp2p "github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/peer"
 	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -21,11 +22,33 @@ type Node struct {
 	Host host2.Host
 }
 
-//func (n *Node) ID() peer.ID {
-//	return peer.ID(n.Host.ID())
-//}
+type WrappedKademria struct {
+	Dht *dht.IpfsDHT
+}
 
-var idht *dht.IpfsDHT
+func (w WrappedKademria) FindProvidersAsync(ctx context.Context, cid cid.Cid, count int) <-chan peer.AddrInfo {
+	orgCh := w.Dht.FindProvidersAsync(ctx, cid, count)
+	retCh := make(chan peer.AddrInfo)
+	go func(ch1 <-chan peer2.AddrInfo, ch2 chan peer.AddrInfo) {
+		recv, more := <-ch1
+		conved := peer.AddrInfo{
+			ID:    peer.ID(recv.ID),
+			Addrs: recv.Addrs,
+		}
+		ch2 <- conved
+		if !more { // ch1 is closed
+			close(ch2)
+		}
+	}(orgCh, retCh)
+
+	return retCh
+}
+
+func (w WrappedKademria) Provide(ctx context.Context, cid cid.Cid, local bool) error {
+	return w.Dht.Provide(ctx, cid, local)
+}
+
+//var idht *dht.IpfsDHT
 
 func New(ctx context.Context, addr string, port uint16) (Node, error) {
 	strAddr := fmt.Sprintf("/ip4/%s/tcp/%d", addr, port)
@@ -45,10 +68,11 @@ func New(ctx context.Context, addr string, port uint16) (Node, error) {
 	return Node{node}, err
 }
 
-func (n *Node) OpenStreamToTargetPeer(ctx context.Context, peer_ peer.AddrInfo) network.Stream {
+func (n *Node) OpenStreamToTargetPeer(ctx context.Context, peer_ peer.AddrInfo) io.ReadWriteCloser {
 	log.Println("Opening a stream to", peer_.ID)
 
-	stream, err := n.Host.NewStream(ctx, peer2.ID(string(peer_.ID)), constants.Protocol)
+	passId := peer2.ID(peer_.ID)
+	stream, err := n.Host.NewStream(ctx, passId, constants.Protocol)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -76,7 +100,8 @@ func (n *Node) newRouting(ctx context.Context) *discovery.RoutingDiscovery {
 
 	n.connectToBootstapPeers(ctx)
 
-	return discovery.NewRoutingDiscovery(kademliaDHT)
+	wrappedDHT := WrappedKademria{kademliaDHT}
+	return discovery.NewRoutingDiscovery(wrappedDHT)
 }
 
 func (n *Node) connectToBootstapPeers(ctx context.Context) {

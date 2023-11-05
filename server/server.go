@@ -6,9 +6,9 @@ import (
 	"log"
 	"net"
 
-	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	network2 "github.com/libp2p/go-libp2p/core/network"
 	"github.com/studiokaiji/libp2p-port-forward/constants"
 	"github.com/studiokaiji/libp2p-port-forward/libp2p"
 	"github.com/studiokaiji/libp2p-port-forward/util"
@@ -43,7 +43,7 @@ func (s *Server) ListenAndSync() {
 	s.node.Advertise(ctx)
 	log.Println("Successfully announced.")
 
-	s.node.SetStreamHandler(constants.Protocol, func(stream network.Stream) {
+	s.node.Host.SetStreamHandler(constants.Protocol, func(stream network2.Stream) {
 		log.Println("Got a new stream!")
 
 		log.Println("Connecting forward server...")
