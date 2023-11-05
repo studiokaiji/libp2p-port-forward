@@ -24,8 +24,8 @@ type Server struct {
 	ID      peer2.ID
 }
 
-func New(ctx context.Context, addr string, port uint16, forward ServerForward) *Server {
-	node, err := libp2p.New(ctx, addr, port)
+func New(addr string, port uint16, forward ServerForward) *Server {
+	node, err := libp2p.New(addr, port)
 	if err != nil {
 		log.Fatalln(err)
 	}

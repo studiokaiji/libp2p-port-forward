@@ -22,7 +22,7 @@ type Node struct {
 	Host host.Host
 }
 
-func New(ctx context.Context, addr string, port uint16) (Node, error) {
+func New(addr string, port uint16) (Node, error) {
 	strAddr := fmt.Sprintf("/ip4/%s/tcp/%d", addr, port)
 	listenAddr := libp2p.ListenAddrStrings(strAddr)
 

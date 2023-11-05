@@ -37,7 +37,7 @@ var clientCmd = &cobra.Command{
 			Port: listenPort,
 		}
 
-		c := client.New(ctx, "127.0.0.1", libp2pPort, listen)
+		c := client.New("127.0.0.1", libp2pPort, listen)
 
 		//pid, err := peer.IDB58Decode(connectTo)
 		pid, err := peer2.Decode(connectTo)
@@ -55,13 +55,11 @@ var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Startup server node.",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
-
 		forward := server.ServerForward{
 			Addr: forwardAddress,
 			Port: forwardPort,
 		}
-		s := server.New(ctx, "0.0.0.0", libp2pPort, forward)
+		s := server.New("0.0.0.0", libp2pPort, forward)
 		s.ListenAndSync()
 
 		util.OSInterrupt()

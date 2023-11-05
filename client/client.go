@@ -21,8 +21,8 @@ type Client struct {
 	listen ClientListen
 }
 
-func New(ctx context.Context, addr string, port uint16, listen ClientListen) *Client {
-	node, err := libp2p.New(ctx, addr, port)
+func New(addr string, port uint16, listen ClientListen) *Client {
+	node, err := libp2p.New(addr, port)
 	if err != nil {
 		log.Fatalln(err)
 	}
