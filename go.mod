@@ -1,6 +1,6 @@
 module github.com/studiokaiji/libp2p-port-forward
 
-go 1.15
+go 1.8
 
 require (
 	github.com/ipfs/go-cid v0.4.1 // indirect
