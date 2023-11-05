@@ -3,10 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
+	peer2 "github.com/libp2p/go-libp2p/core/peer"
 	"log"
 	"os"
 
-	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/spf13/cobra"
 	"github.com/studiokaiji/libp2p-port-forward/client"
 	"github.com/studiokaiji/libp2p-port-forward/server"
@@ -40,7 +40,7 @@ var clientCmd = &cobra.Command{
 		c := client.New(ctx, "127.0.0.1", libp2pPort, listen)
 
 		//pid, err := peer.IDB58Decode(connectTo)
-		pid, err := peer.Decode(connectTo)
+		pid, err := peer2.Decode(connectTo)
 		if err != nil {
 			log.Fatalln(err)
 		}
