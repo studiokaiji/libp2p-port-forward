@@ -39,7 +39,8 @@ var clientCmd = &cobra.Command{
 
 		c := client.New(ctx, "127.0.0.1", libp2pPort, listen)
 
-		pid, err := peer.IDB58Decode(connectTo)
+		//pid, err := peer.IDB58Decode(connectTo)
+		pid, err := peer.Decode(connectTo)
 		if err != nil {
 			log.Fatalln(err)
 		}

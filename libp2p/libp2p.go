@@ -3,6 +3,7 @@ package libp2p
 import (
 	"context"
 	"fmt"
+	"github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoremem"
 	"log"
 	"sync"
 
@@ -10,33 +11,48 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	discovery "github.com/libp2p/go-libp2p-discovery"
-	host "github.com/libp2p/go-libp2p-host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	host2 "github.com/libp2p/go-libp2p/core/host"
+	peer2 "github.com/libp2p/go-libp2p/core/peer"
 	"github.com/studiokaiji/libp2p-port-forward/constants"
 )
 
 type Node struct {
-	host.Host
+	Host host2.Host
 }
+
+//func (n *Node) ID() peer.ID {
+//	return peer.ID(n.Host.ID())
+//}
 
 var idht *dht.IpfsDHT
 
 func New(ctx context.Context, addr string, port uint16) (Node, error) {
 	strAddr := fmt.Sprintf("/ip4/%s/tcp/%d", addr, port)
 	listenAddr := libp2p.ListenAddrStrings(strAddr)
-	node, err := libp2p.New(ctx, listenAddr)
+
+	var DefaultPeerstore libp2p.Option = func(cfg *libp2p.Config) error {
+		ps, err := pstoremem.NewPeerstore()
+		if err != nil {
+			return err
+		}
+
+		return cfg.Apply(libp2p.Peerstore(ps))
+	}
+
+	node, err := libp2p.New(DefaultPeerstore, listenAddr)
 
 	return Node{node}, err
 }
 
-func (n *Node) OpenStreamToTargetPeer(ctx context.Context, peer peer.AddrInfo) network.Stream {
-	log.Println("Opening a stream to", peer.ID)
+func (n *Node) OpenStreamToTargetPeer(ctx context.Context, peer_ peer.AddrInfo) network.Stream {
+	log.Println("Opening a stream to", peer_.ID)
 
-	stream, err := n.NewStream(ctx, peer.ID, constants.Protocol)
+	stream, err := n.Host.NewStream(ctx, peer2.ID(string(peer_.ID)), constants.Protocol)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("Opened a stream to", peer.ID)
+	log.Println("Opened a stream to", peer_.ID)
 
 	return stream
 }
@@ -47,7 +63,7 @@ func (n *Node) Advertise(ctx context.Context) {
 }
 
 func (n *Node) newRouting(ctx context.Context) *discovery.RoutingDiscovery {
-	kademliaDHT, err := dht.New(ctx, n)
+	kademliaDHT, err := dht.New(ctx, n.Host)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -70,7 +86,8 @@ func (n *Node) connectToBootstapPeers(ctx context.Context) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := n.Connect(ctx, *peerinfo); err != nil {
+
+			if err := n.Host.Connect(ctx, peer2.AddrInfo{peer2.ID(peerinfo.ID), peerinfo.Addrs}); err != nil {
 				log.Println(err)
 			} else {
 				log.Println("Connection established with bootstrap node:", *peerinfo)
@@ -80,6 +97,10 @@ func (n *Node) connectToBootstapPeers(ctx context.Context) {
 	wg.Wait()
 
 	return
+}
+
+func (n *Node) ID() peer.ID {
+	return peer.ID(n.Host.ID())
 }
 
 func (n *Node) DiscoveryPeer(ctx context.Context, targetPeerId peer.ID) peer.AddrInfo {
